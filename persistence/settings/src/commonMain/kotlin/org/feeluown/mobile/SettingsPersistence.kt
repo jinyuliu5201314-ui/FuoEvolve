@@ -31,6 +31,15 @@ data class PersistedPlaylistPlaybackStat(
     val lastPlayedAtMillis: Long = 0,
 )
 
+@Serializable
+data class PersistedBackgroundImageSettings(
+    val enabled: Boolean? = null,
+    val path: String? = null,
+    val dim: Float? = null,
+    val blurDp: Float? = null,
+    val contentAlpha: Float? = null,
+)
+
 /**
  * Stable persistence schema for application settings.
  *
@@ -83,6 +92,7 @@ data class PersistedSettingsV1(
     val themePaletteStyle: String? = null,
     val themeColorSpec: String? = null,
     val dynamicCoverColorEnabled: Boolean? = null,
+    val backgroundImage: PersistedBackgroundImageSettings? = null,
     val waveformAnimationDisabled: Boolean? = null,
     val appUpdateChannel: String? = null,
     val autoCheckAppUpdates: Boolean? = null,

@@ -79,6 +79,27 @@ class FuoThemeTest {
     }
 
     @Test
+    fun backgroundOverlayOnlyFadesSurfacesAndKeepsForegroundOpaque() {
+        val base = expressiveColorScheme(Color(0xFF6750A4), darkTheme = false)
+        val translucent = base.withSurfaceAlpha(0.6f)
+
+        assertEquals(0.6f, translucent.surface.alpha)
+        assertEquals(0.6f, translucent.background.alpha)
+        assertEquals(0.6f, translucent.surfaceContainerHigh.alpha)
+        assertEquals(0.6f, translucent.surfaceContainerLowest.alpha)
+        assertEquals(base.onSurface, translucent.onSurface)
+        assertEquals(base.onSurfaceVariant, translucent.onSurfaceVariant)
+        assertEquals(base.primary, translucent.primary)
+    }
+
+    @Test
+    fun fullContentOpacityLeavesColorSchemeUnchanged() {
+        val base = expressiveColorScheme(Color(0xFF6750A4), darkTheme = true)
+
+        assertEquals(base, base.withSurfaceAlpha(1f))
+    }
+
+    @Test
     fun contrastRatioUsesForegroundAndBackgroundLuminance() {
         assertEquals(21.0, colorContrastRatio(Color.White, Color.Black), absoluteTolerance = 0.01)
         assertTrue(colorContrastRatio(Color.Black, Color.White) >= 21.0 - 0.01)

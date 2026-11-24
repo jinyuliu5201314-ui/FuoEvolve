@@ -166,6 +166,13 @@ internal fun AppSettings.toPersistedSettings(): PersistedSettingsV1 = PersistedS
     themePaletteStyle = themePaletteStyle.name,
     themeColorSpec = themeColorSpec.name,
     dynamicCoverColorEnabled = dynamicCoverColorEnabled,
+    backgroundImage = PersistedBackgroundImageSettings(
+        enabled = backgroundImage.enabled,
+        path = backgroundImage.path,
+        dim = backgroundImage.dim,
+        blurDp = backgroundImage.blurDp,
+        contentAlpha = backgroundImage.contentAlpha,
+    ),
     waveformAnimationDisabled = waveformAnimationDisabled,
     appUpdateChannel = appUpdateChannel.name,
     autoCheckAppUpdates = autoCheckAppUpdates,
@@ -223,6 +230,15 @@ internal fun PersistedSettingsV1.toAppSettings(): AppSettings {
         themePaletteStyle = themePaletteStyle.enumOr(defaults.themePaletteStyle),
         themeColorSpec = themeColorSpec.enumOr(defaults.themeColorSpec),
         dynamicCoverColorEnabled = dynamicCoverColorEnabled ?: defaults.dynamicCoverColorEnabled,
+        backgroundImage = backgroundImage?.let { persisted ->
+            BackgroundImageSettings(
+                enabled = persisted.enabled ?: defaults.backgroundImage.enabled,
+                path = persisted.path,
+                dim = persisted.dim ?: defaults.backgroundImage.dim,
+                blurDp = persisted.blurDp ?: defaults.backgroundImage.blurDp,
+                contentAlpha = persisted.contentAlpha ?: defaults.backgroundImage.contentAlpha,
+            )
+        } ?: defaults.backgroundImage,
         waveformAnimationDisabled = waveformAnimationDisabled ?: defaults.waveformAnimationDisabled,
         appUpdateChannel = appUpdateChannel.enumOr(defaults.appUpdateChannel),
         autoCheckAppUpdates = autoCheckAppUpdates ?: defaults.autoCheckAppUpdates,

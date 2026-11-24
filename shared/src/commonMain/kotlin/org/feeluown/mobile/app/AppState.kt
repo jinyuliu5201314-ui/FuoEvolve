@@ -114,6 +114,7 @@ data class AppUiState(
     val themeColorScheme: ThemeColorScheme = ThemeColorScheme.Dynamic,
     val themePaletteStyle: ThemePaletteStyle = ThemePaletteStyle.Expressive,
     val themeColorSpec: ThemeColorSpec = ThemeColorSpec.Expressive_2025,
+    val backgroundImage: BackgroundImageSettings = BackgroundImageSettings(),
     val backStack: List<AppRoute> = listOf(AppRoute.Home),
 )
 
@@ -126,6 +127,7 @@ private fun appUiState(settingsState: SettingsState, backStack: List<AppRoute>):
         themeColorScheme = settings.themeColorScheme,
         themePaletteStyle = settings.themePaletteStyle,
         themeColorSpec = settings.themeColorSpec,
+        backgroundImage = settings.backgroundImage,
         backStack = backStack,
     )
 }

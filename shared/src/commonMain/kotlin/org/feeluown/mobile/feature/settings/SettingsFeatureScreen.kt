@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Palette
@@ -90,6 +91,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.NavDisplay
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @Serializable
 private enum class FeatureSettingsCategory(
@@ -1083,6 +1085,12 @@ private fun AppearanceFeatureSettings(
         )
     }
 
+    PageBackgroundSettings(
+        background = settings.backgroundImage,
+        enabled = enabled,
+        controller = controller,
+    )
+
     SettingsGroup(title = "播放显示") {
         Column(
             modifier = Modifier.padding(horizontal = FuoSpacing.lg, vertical = FuoSpacing.md),
@@ -1189,6 +1197,141 @@ private fun ThemeSettingsContent(
             checked = settings.dynamicCoverColorEnabled,
             enabled = enabled,
         ) { value -> controller.update { it.copy(dynamicCoverColorEnabled = value) } }
+    }
+}
+
+@Composable
+private fun PageBackgroundSettings(
+    background: BackgroundImageSettings,
+    enabled: Boolean,
+    controller: SettingsFeatureController,
+) {
+    val picker = rememberBackgroundImagePicker { path ->
+        if (path != null) {
+            controller.updateBackgroundImage { current -> current.copy(path = path, enabled = true) }
+        }
+    }
+    SettingsGroup(title = "页面背景") {
+        SettingsToggleRow(
+            title = "使用相册图片作为页面背景",
+            supportingText = when {
+                background.path == null -> "先从相册选一张图片"
+                background.enabled -> "图片显示在页面内容下方"
+                else -> "图片已选好，打开后立即生效"
+            },
+            checked = background.enabled && background.path != null,
+            enabled = enabled && background.path != null,
+            onCheckedChange = { value ->
+                controller.updateBackgroundImage { current -> current.copy(enabled = value) }
+            },
+        )
+        SettingsDivider()
+        SettingsRow(
+            title = if (background.path == null) "从相册选择图片" else "更换背景图片",
+            supportingText = if (picker.isAvailable) {
+                "图片会复制到应用内，不需要额外的存储权限"
+            } else {
+                "当前平台暂不支持相册选图"
+            },
+            enabled = enabled && picker.isAvailable,
+            leadingContent = {
+                Icon(
+                    Icons.Filled.Image,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            trailingContent = {
+                Icon(
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            onClick = picker.launch,
+        )
+        if (background.path != null) {
+            SettingsDivider()
+            SettingsRow(
+                title = "移除背景图片",
+                supportingText = "恢复默认的纯色页面背景",
+                enabled = enabled,
+                onClick = {
+                    controller.updateBackgroundImage { current ->
+                        current.copy(path = null, enabled = false)
+                    }
+                },
+            )
+            SettingsDivider()
+            Column(
+                modifier = Modifier.padding(horizontal = FuoSpacing.lg, vertical = FuoSpacing.md),
+                verticalArrangement = Arrangement.spacedBy(FuoSpacing.md),
+            ) {
+                BackgroundSlider(
+                    title = "背景压暗",
+                    valueLabel = "${(background.dim * 100).roundToInt()}%",
+                    value = background.dim,
+                    valueRange = 0f..MAX_BACKGROUND_IMAGE_DIM,
+                    enabled = enabled,
+                ) { value ->
+                    controller.updateBackgroundImage { current -> current.copy(dim = value) }
+                }
+                BackgroundSlider(
+                    title = "背景模糊",
+                    valueLabel = "${background.blurDp.roundToInt()} dp",
+                    value = background.blurDp,
+                    valueRange = 0f..MAX_BACKGROUND_IMAGE_BLUR_DP,
+                    enabled = enabled,
+                ) { value ->
+                    controller.updateBackgroundImage { current -> current.copy(blurDp = value) }
+                }
+                BackgroundSlider(
+                    title = "内容不透明度",
+                    valueLabel = "${(background.contentAlpha * 100).roundToInt()}%",
+                    value = background.contentAlpha,
+                    valueRange = MIN_BACKGROUND_IMAGE_CONTENT_ALPHA..1f,
+                    enabled = enabled,
+                ) { value ->
+                    controller.updateBackgroundImage { current -> current.copy(contentAlpha = value) }
+                }
+                Text(
+                    "内容不透明度越低，页面越能透出背景图；文字可读性由背景压暗保证。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BackgroundSlider(
+    title: String,
+    valueLabel: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    enabled: Boolean,
+    onValueChange: (Float) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(FuoSpacing.xs)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(valueLabel, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Slider(
+            value = value.coerceIn(valueRange.start, valueRange.endInclusive),
+            onValueChange = onValueChange,
+            valueRange = valueRange,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

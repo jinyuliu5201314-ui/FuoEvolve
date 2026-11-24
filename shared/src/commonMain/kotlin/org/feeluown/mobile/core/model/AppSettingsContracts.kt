@@ -68,6 +68,34 @@ enum class DesktopVideoDecodeMode(
     Software("软件解码", "使用 CPU 解码，用于硬件解码绿屏或兼容性问题"),
 }
 
+/**
+ * 用户自定义的页面背景（来自系统相册）。
+ *
+ * [path] 指向应用私有目录内的图片副本：由平台层在用户选图后复制进来，
+ * 因此背景功能不需要额外的存储读取权限，卸载应用或清除数据后自然失效。
+ */
+@Serializable
+data class BackgroundImageSettings(
+    val enabled: Boolean = false,
+    val path: String? = null,
+    /** 背景图之上的主题色遮罩强度，越大背景越暗/越淡。 */
+    val dim: Float = DEFAULT_BACKGROUND_IMAGE_DIM,
+    /** 背景图模糊半径，0 表示不模糊。 */
+    val blurDp: Float = DEFAULT_BACKGROUND_IMAGE_BLUR_DP,
+    /** 页面内容面板的不透明度，越小越能透出背景图。 */
+    val contentAlpha: Float = DEFAULT_BACKGROUND_IMAGE_CONTENT_ALPHA,
+) {
+    /** 只有开关打开且已经选过图时，背景才真正参与渲染。 */
+    val isActive: Boolean get() = enabled && !path.isNullOrBlank()
+}
+
+const val DEFAULT_BACKGROUND_IMAGE_DIM = 0.35f
+const val DEFAULT_BACKGROUND_IMAGE_BLUR_DP = 0f
+const val DEFAULT_BACKGROUND_IMAGE_CONTENT_ALPHA = 0.88f
+const val MAX_BACKGROUND_IMAGE_DIM = 0.8f
+const val MAX_BACKGROUND_IMAGE_BLUR_DP = 30f
+const val MIN_BACKGROUND_IMAGE_CONTENT_ALPHA = 0.4f
+
 @Serializable
 data class AppSettings(
     val onboardingCompleted: Boolean = false,
@@ -113,6 +141,7 @@ data class AppSettings(
     val themePaletteStyle: ThemePaletteStyle = ThemePaletteStyle.Expressive,
     val themeColorSpec: ThemeColorSpec = ThemeColorSpec.Expressive_2025,
     val dynamicCoverColorEnabled: Boolean = false,
+    val backgroundImage: BackgroundImageSettings = BackgroundImageSettings(),
     val waveformAnimationDisabled: Boolean = false,
     val appUpdateChannel: AppUpdateChannel = AppUpdateChannel.Stable,
     val autoCheckAppUpdates: Boolean = true,

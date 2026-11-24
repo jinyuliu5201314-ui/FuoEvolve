@@ -1,0 +1,46 @@
+name: Build Custom APK
+
+# 自用构建入口：手动触发，产出 debug 签名的 APK，安装到自己的手机上。
+# 与官方版签名不同，安装前需要先卸载官方版（会清除应用私有数据）。
+"on":
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Prepare Git refs for Gradle versioning
+        run: |
+          if ! git show-ref --verify --quiet refs/heads/master; then
+            git branch master origin/master
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Assemble debug APK
+        run: ./gradlew --no-configuration-cache :androidApp:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuo-evolve-custom-debug
+          path: androidApp/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

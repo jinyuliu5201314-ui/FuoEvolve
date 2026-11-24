@@ -276,6 +276,65 @@ class AppSettingsRepositoryTest {
         )
     }
 
+    @Test
+    fun backgroundImageDefaultsOffAndRoundTrips() = runTest {
+        val store = FakeSettingsSnapshotStore()
+        val first = PersistentAppSettingsRepository(
+            store = store,
+            legacyLoader = null,
+            scope = backgroundScope,
+        )
+
+        val defaults = first.awaitSettings().backgroundImage
+        assertFalse(defaults.enabled)
+        assertFalse(defaults.isActive)
+        assertEquals(null, defaults.path)
+        assertEquals(DEFAULT_BACKGROUND_IMAGE_DIM, defaults.dim)
+
+        val pickedPath = "/data/user/0/org.feeluown.mobile/files/background/page_background.jpg"
+        first.update { settings ->
+            settings.copy(
+                backgroundImage = settings.backgroundImage.copy(
+                    enabled = true,
+                    path = pickedPath,
+                    dim = 0.5f,
+                    blurDp = 12f,
+                    contentAlpha = 0.7f,
+                ),
+            )
+        }
+
+        val restored = PersistentAppSettingsRepository(
+            store = store,
+            legacyLoader = null,
+            scope = backgroundScope,
+        ).awaitSettings().backgroundImage
+
+        assertTrue(restored.enabled)
+        assertTrue(restored.isActive)
+        assertEquals(pickedPath, restored.path)
+        assertEquals(0.5f, restored.dim)
+        assertEquals(12f, restored.blurDp)
+        assertEquals(0.7f, restored.contentAlpha)
+    }
+
+    @Test
+    fun missingBackgroundImageSettingsFallBackToDefaults() = runTest {
+        val repository = PersistentAppSettingsRepository(
+            store = FakeSettingsSnapshotStore(
+                SettingsSnapshotReadResult.Loaded(PersistedSettingsV1(onboardingCompleted = true)),
+            ),
+            legacyLoader = null,
+            scope = backgroundScope,
+        )
+
+        val background = repository.awaitSettings().backgroundImage
+
+        assertFalse(background.enabled)
+        assertEquals(null, background.path)
+        assertEquals(DEFAULT_BACKGROUND_IMAGE_CONTENT_ALPHA, background.contentAlpha)
+    }
+
     private class FakeSettingsSnapshotStore(
         initial: SettingsSnapshotReadResult = SettingsSnapshotReadResult.Missing,
     ) : SettingsSnapshotStore {

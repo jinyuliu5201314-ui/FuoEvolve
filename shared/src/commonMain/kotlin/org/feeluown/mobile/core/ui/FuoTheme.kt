@@ -46,6 +46,8 @@ fun FuoTheme(
     themeColorScheme: ThemeColorScheme,
     themePaletteStyle: ThemePaletteStyle = ThemePaletteStyle.Expressive,
     themeColorSpec: ThemeColorSpec = ThemeColorSpec.Expressive_2025,
+    // 内容面板不透明度；启用自定义背景时小于 1，让底图透出来。
+    contentSurfaceAlpha: Float = 1f,
     content: @Composable () -> Unit,
 ) {
     val darkTheme = resolvedDarkTheme(themeMode, isSystemInDarkTheme())
@@ -59,16 +61,40 @@ fun FuoTheme(
         target = targetColorScheme,
         labelPrefix = "app theme",
     )
+    // 自定义页面背景需要内容面板半透明，底图才能透出来；前景色保持不变。
+    val contentColorScheme = remember(animatedColorScheme, contentSurfaceAlpha) {
+        animatedColorScheme.withSurfaceAlpha(contentSurfaceAlpha)
+    }
     CompositionLocalProvider(
         LocalThemePaletteStyle provides themePaletteStyle,
         LocalThemeColorSpec provides themeColorSpec,
         LocalBaseTargetColorScheme provides targetColorScheme,
     ) {
-        FuoExpressiveTheme(colorScheme = animatedColorScheme) {
+        FuoExpressiveTheme(colorScheme = contentColorScheme) {
             platformWindowSurfaceEffect(animatedColorScheme.surface)
             content()
         }
     }
+}
+
+/**
+ * 只降低 surface 系颜色的 alpha，用于让自定义背景透出内容面板。
+ *
+ * 文字/图标使用 onSurface 系列颜色，不参与淡出，可读性交给背景遮罩控制。
+ */
+internal fun ColorScheme.withSurfaceAlpha(alpha: Float): ColorScheme {
+    if (alpha >= 1f) return this
+    val normalized = alpha.coerceIn(MIN_BACKGROUND_IMAGE_CONTENT_ALPHA, 1f)
+    return copy(
+        background = background.copy(alpha = normalized),
+        surface = surface.copy(alpha = normalized),
+        surfaceVariant = surfaceVariant.copy(alpha = normalized),
+        surfaceContainerLowest = surfaceContainerLowest.copy(alpha = normalized),
+        surfaceContainerLow = surfaceContainerLow.copy(alpha = normalized),
+        surfaceContainer = surfaceContainer.copy(alpha = normalized),
+        surfaceContainerHigh = surfaceContainerHigh.copy(alpha = normalized),
+        surfaceContainerHighest = surfaceContainerHighest.copy(alpha = normalized),
+    )
 }
 
 @Composable
